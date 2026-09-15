@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estante · {{ total }} livros</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='estante.ico') }}">
+</head>
+<body>
+
+  <header class="top-bar">
+    <h1 class="brand"> <img src="{{ url_for('static', filename='estante.png') }}" alt="" class="brand-logo">Estante</h1>
+
+    <div class="search-wrap">
+      <input id="search" type="text" placeholder="Buscar por título ou autor" autocomplete="off">
+    </div>
+
+    <p class="stats">{{ total }} livros de {{ authors|length }} autores</p>
+	<button id="rescan-btn" class="logout-link" type="button">Atualizar biblioteca</button>																					   
+    <a class="logout-link" href="{{ url_for('logout') }}">Sair</a>
+  </header>
+
+  {% if total == 0 %}
+  <div class="empty-library">
+    <p>Nenhum livro encontrado em <code>{{ library_dir }}</code>.</p>
+    <p>Confira se o caminho está correto e se os arquivos têm uma extensão suportada.</p>
+  </div>
+  {% else %}
+
+  <main id="shelf">
+    {% for author, books in authors.items() %}
+    <section class="row" data-author="{{ author|lower }}">
+      <h2 class="row-title">{{ author }}</h2>
+      <div class="row-track">
+        {% for book in books %}
+        <a class="book-card"
+           href="{{ url_for('read_book', book_id=book.id) if book.ext == 'epub' else url_for('open_book', book_id=book.id) }}"
+           target="_blank"
+           rel="noopener"
+           data-title="{{ book.title|lower }}"
+           data-author="{{ author|lower }}">
+          <span class="cover">
+            <img loading="lazy" src="{{ book.cover_url }}" alt="Capa de {{ book.title }}">
+            <span class="format-tag">{{ book.ext|upper }}</span>
+          </span>
+          <span class="book-title">{{ book.title }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </main>
+
+  <p id="empty-state" class="empty-state" hidden>Nenhum livro corresponde à busca.</p>
+
+  {% endif %}
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

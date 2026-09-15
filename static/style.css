@@ -1,0 +1,411 @@
+/*
+  Paleta: biblioteca à noite — quase-preto acastanhado, papel envelhecido
+  e um dourado de lombada de livro como único acento de cor.
+*/
+:root {
+  --bg: #100d0a;
+  --bg-row: #17130f;
+  --paper: #ece4d3;
+  --paper-dim: #a89e8c;
+  --gold: #c9a24a;
+  --leather: #4a2f22;
+  --shadow: rgba(0, 0, 0, 0.55);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--paper);
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.brand {
+  margin: 0;
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--paper);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;				
+}
+.brand-logo {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 20px 44px;
+  background: linear-gradient(to bottom, rgba(16, 13, 10, 0.97) 60%, rgba(16, 13, 10, 0));
+}
+
+.search-wrap { flex: 1; max-width: 440px; }
+
+#search {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 3px;
+  border: 1px solid #332a20;
+  background: #1c1712;
+  color: var(--paper);
+  font-size: 14px;
+}
+
+#search::placeholder { color: var(--paper-dim); }
+#search:focus { outline: none; border-color: var(--gold); }
+
+.stats {
+  margin: 0;
+  color: var(--paper-dim);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.logout-link {
+  color: var(--paper-dim);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid #332a20;
+  padding: 6px 12px;
+  border-radius: 3px;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.logout-link:disabled { opacity: 0.5; cursor: default; }														
+.logout-link:hover { border-color: var(--gold); color: var(--paper); }
+
+/* --- Tela de login --- */
+
+.login-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.login-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 340px;
+  background: var(--bg-row);
+  border: 1px solid #2a2119;
+  border-radius: 4px;
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+.login-card .brand { align-self: center; }
+
+.login-subtitle {
+  margin: 0;
+  color: var(--paper-dim);
+  font-size: 14px;
+}
+
+.login-input {
+  padding: 12px 14px;
+  border-radius: 3px;
+  border: 1px solid #332a20;
+  background: #1c1712;
+  color: var(--paper);
+  font-size: 15px;
+  text-align: center;
+}
+
+.login-input::placeholder { color: var(--paper-dim); }
+.login-input:focus { outline: none; border-color: var(--gold); }
+
+.login-error {
+  margin: 0;
+  color: #d97a6a;
+  font-size: 13px;
+}
+
+.login-button {
+  padding: 12px 14px;
+  border-radius: 3px;
+  border: none;
+  background: var(--gold);
+  color: #1c1712;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.login-button:hover { filter: brightness(1.08); }
+
+/* --- Leitor de EPUB --- */
+
+html, body.reader-body { height: 100%; }
+
+.reader-body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reader-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--bg-row);
+  border-bottom: 1px solid #2a2119;
+  flex: 0 0 auto;
+}
+
+.reader-back {
+  color: var(--paper-dim);
+  text-decoration: none;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.reader-back:hover { color: var(--gold); }
+
+.reader-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.reader-title {
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 15px;
+  color: var(--paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
+}
+
+.reader-download { 
+  color: var(--paper-dim); 
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 15px;
+  margin-left: 6px; 
+  text-decoration: none; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
+}
+.reader-download:hover { color: var(--gold); }
+
+.reader-author {
+  font-size: 12px;
+  color: var(--paper-dim);
+}
+
+.reader-progress {
+  font-size: 12px;
+  color: var(--paper-dim);
+  min-width: 36px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.viewer-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #f4ecd8;
+}
+
+.viewer {
+  position: absolute;
+  inset: 0;
+}
+
+.nav-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 56px;
+  border: none;
+  background: transparent;
+  color: rgba(34, 26, 18, 0.32);
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-btn:hover { background: rgba(0, 0, 0, 0.05); color: rgba(34, 26, 18, 0.65); }
+.nav-prev { left: 0; }
+.nav-next { right: 0; }
+
+.reader-error {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(16, 13, 10, 0.94);
+  color: var(--paper);
+  padding: 12px 18px;
+  border-radius: 4px;
+  font-size: 13px;
+  text-align: center;
+  max-width: 90vw;
+}
+
+.reader-error a { color: var(--gold); margin-left: 6px; }
+
+@media (max-width: 640px) {
+  .reader-bar { padding: 12px 14px; }
+  .reader-title { max-width: 40vw; }
+  .nav-btn { width: 40px; font-size: 24px; }
+}
+
+main#shelf { padding: 8px 44px 64px; }
+
+.row { margin-bottom: 40px; }
+
+.row-title {
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 19px;
+  font-weight: 600;
+  margin: 0 0 14px;
+  color: var(--paper);
+  border-bottom: 1px solid #2a2119;
+  padding-bottom: 8px;
+}
+
+.row-track {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.row-track::-webkit-scrollbar { height: 6px; }
+.row-track::-webkit-scrollbar-thumb { background: #2a2119; border-radius: 3px; }
+
+.book-card {
+  flex: 0 0 auto;
+  width: 148px;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cover {
+  position: relative;
+  display: block;
+  width: 148px;
+  height: 222px;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px var(--shadow);
+  border: 1px solid #2a2119;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.book-card:hover .cover,
+.book-card:focus-visible .cover {
+  transform: translateY(-6px);
+  border-color: var(--gold);
+  box-shadow: 0 14px 26px var(--shadow);
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.format-tag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(16, 13, 10, 0.85);
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 2px;
+}
+
+.book-title {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--paper-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.book-card:hover .book-title,
+.book-card:focus-visible .book-title { color: var(--paper); }
+
+.empty-state, .empty-library {
+  text-align: center;
+  color: var(--paper-dim);
+  margin-top: 90px;
+  font-size: 15px;
+  padding: 0 24px;
+}
+
+.empty-library code {
+  color: var(--gold);
+  background: #1c1712;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.reader-footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+  background: var(--bg-row);
+  border-top: 1px solid #2a2119;
+  display: flex;
+}
+ 
+.page-counter {
+  font-size: 12px;
+  color: var(--paper-dim);
+  letter-spacing: 0.4px;
+}
+
+@media (max-width: 640px) {
+  .top-bar { padding: 14px 18px; flex-wrap: wrap; row-gap: 10px; }
+  main#shelf { padding: 8px 18px 48px; }
+  .book-card, .cover { width: 108px; }
+  .cover { height: 162px; }
+  .stats { width: 100%; order: 3; }
+}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ book.title }} · {{ book.author }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='estante.ico') }}">
+  <script src="{{ url_for('static', filename='jszip.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='epub.min.js') }}"></script>
+</head>
+<body class="reader-body">
+
+  <header class="reader-bar">
+    <a class="reader-back" href="{{ url_for('index') }}">‹ Estante</a>
+    <div class="reader-heading">
+      <span class="reader-title">{{ book.title }} | 
+		<a class="reader-download" href="{{ url_for('open_book', book_id=book.id) }}">Download ↓</a></span>
+      <span class="reader-author">{{ book.author }}</span>
+	  <span class="reader-title"></span>
+    </div>
+    <span class="reader-progress" id="progress"></span>
+  </header>
+
+  <div class="viewer-wrap">
+    <div id="viewer" class="viewer"></div>
+    <button id="prev" class="nav-btn nav-prev" aria-label="Página anterior">‹</button>
+    <button id="next" class="nav-btn nav-next" aria-label="Próxima página">›</button>
+  </div>
+  
+  <footer class="reader-footer">
+    <span id="page-counter" class="page-counter">Carregando…</span>
+  </footer>
+
+  <p id="reader-error" class="reader-error" hidden>
+    Não foi possível abrir este EPUB para leitura no navegador.
+    <a href="{{ url_for('open_book', book_id=book.id) }}">Baixar o arquivo</a> em vez disso.
+  </p>
+
+  <script>
+    const rawUrl = "{{ url_for('book_raw', book_id=book.id) }}";
+    // "openAs: epub" força o epub.js a baixar a URL inteira como um
+    // arquivo .epub compactado (via JSZip), em vez de tentar interpretá-la
+    // como uma pasta com os arquivos do EPUB já descompactados — o que
+    // aconteceria por padrão, já que a URL não termina em ".epub".
+    const book = ePub(rawUrl, { openAs: "epub" });
+    const rendition = book.renderTo("viewer", {
+      width: "100%",
+      height: "100%",
+      spread: "auto",
+    });
+
+	rendition.themes.default({
+	"body": {
+		"background": "#f4ecd8 !important",
+		"color": "#221a12 !important",
+		"padding": "0 12px !important",
+	},
+	"body:has(> img:only-child)": {
+		"display": "flex !important",
+		"align-items": "center !important",
+		"justify-content": "center !important",
+		"height": "100vh !important",
+		"margin": "0 !important",
+	},
+	"body:has(> div:only-child > img:only-child)": {
+		"display": "flex !important",
+		"align-items": "center !important",
+		"justify-content": "center !important",
+		"height": "100vh !important",
+		"margin": "0 !important",
+	},
+	"body:has(> div:only-child > img:only-child) > div": {
+		"display": "flex !important",
+		"align-items": "center !important",
+		"justify-content": "center !important",
+		"width": "100% !important",
+	},
+	"img": {
+		"display": "block !important",
+		"margin": "0 auto !important",
+		"max-width": "100% !important",
+		"max-height": "100% !important",
+	},
+	"a": { "color": "#7a4b16 !important" },
+	});
+
+    rendition.display();
+
+    document.getElementById("prev").addEventListener("click", () => rendition.prev());
+    document.getElementById("next").addEventListener("click", () => rendition.next());
+
+    document.addEventListener("keyup", (event) => {
+      if (event.key === "ArrowLeft") rendition.prev();
+      if (event.key === "ArrowRight") rendition.next();
+    });
+
+    // Suporte a arrastar/deslizar em telas de toque
+    let touchStartX = null;
+    document.getElementById("viewer").addEventListener("touchstart", (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    document.getElementById("viewer").addEventListener("touchend", (e) => {
+      if (touchStartX === null) return;
+      const delta = e.changedTouches[0].screenX - touchStartX;
+      if (delta > 60) rendition.prev();
+      if (delta < -60) rendition.next();
+      touchStartX = null;
+    });
+
+    const progressEl = document.getElementById("progress");
+	const pageCounterEl = document.getElementById("page-counter");	
+    let totalPages = null;
+	
+	function updateProgress(location) {
+      if (!totalPages) return; // locations ainda não geradas
+      const pct = book.locations.percentageFromCfi(location.start.cfi);
+      progressEl.textContent = Math.round(pct * 100) + "%";
+ 
+      const currentPage = book.locations.locationFromCfi(location.start.cfi) + 1;
+      pageCounterEl.textContent = `${currentPage} / ${totalPages}`;
+    }
+ 
+    // registra o listener já de cara, para não perder o primeiro "relocated"
+    rendition.on("relocated", updateProgress);
+	
+	book.ready
+	.then(() => book.locations.generate(1200))
+	.then(() => {
+		totalPages = book.locations.length();
+		// atualiza imediatamente com a posição atual, sem esperar o próximo "virar de página"
+		if (rendition.location) {
+		updateProgress(rendition.location);
+		}
+	})
+	.catch(() => {
+		// Sem contador/progresso caso a geração de localizações falhe;
+		// a leitura em si continua funcionando normalmente.
+		pageCounterEl.textContent = "";
+	});
+
+    book.on("openFailed", () => {
+      document.getElementById("reader-error").hidden = false;
+    });
+
+    rendition.on("displayError", () => {
+      document.getElementById("reader-error").hidden = false;
+    });
+  </script>
+</body>
+</html>
