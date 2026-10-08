@@ -53,3 +53,17 @@ if (rescanBtn) {
     }
   });
 }
+
+const backToTop = document.getElementById("back-to-top");
+if (backToTop) {
+  const toggleBackToTop = () => {
+    backToTop.classList.toggle("visible", window.scrollY > 280);
+  };
+
+  window.addEventListener("scroll", toggleBackToTop, { passive: true });
+  toggleBackToTop();
+
+  backToTop.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}

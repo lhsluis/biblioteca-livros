@@ -28,9 +28,16 @@
   </div>
   {% else %}
 
+  <nav class="author-index" aria-label="Navegação por autor">
+    <span class="author-index-label">Autores</span>
+    {% for letter, target in letter_targets|dictsort %}
+    <a class="author-index-link" href="#{{ target }}" aria-label="Ir para autores começando com {{ letter }}">{{ letter }}</a>
+    {% endfor %}
+  </nav>
+
   <main id="shelf">
     {% for author, books in authors.items() %}
-    <section class="row" data-author="{{ author|lower }}">
+    <section class="row" id="author-{{ loop.index0 }}" data-author="{{ author|lower }}">
       <h2 class="row-title">{{ author }}</h2>
       <div class="row-track">
         {% for book in books %}
@@ -55,6 +62,8 @@
   <p id="empty-state" class="empty-state" hidden>Nenhum livro corresponde à busca.</p>
 
   {% endif %}
+
+  <button id="back-to-top" class="back-to-top" type="button" aria-label="Voltar ao topo" title="Voltar ao topo">↑</button>
 
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
