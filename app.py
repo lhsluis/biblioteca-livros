@@ -140,10 +140,15 @@ def index():
     for b in books:
         authors.setdefault(b.author, []).append(b)
     authors = dict(sorted(authors.items(), key=lambda kv: kv[0].lower()))
+    letter_targets = {}
+    for position, author in enumerate(authors):
+        letter = author[:1].upper()
+        letter_targets.setdefault(letter, f"author-{position}")
 
     return render_template(
         "index.html",
         authors=authors,
+        letter_targets=letter_targets,
         total=len(books),
         library_dir=str(Path(LIBRARY_DIR).expanduser().resolve()),
     )

@@ -287,7 +287,94 @@ html, body.reader-body { height: 100%; }
 
 main#shelf { padding: 8px 44px 64px; }
 
-.row { margin-bottom: 40px; }
+.author-index {
+  position: fixed;
+  z-index: 9;
+  top: 50%;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transform: translateY(-50%);
+  padding: 9px 5px;
+  border: 1px solid rgba(74, 47, 34, 0.8);
+  border-radius: 14px;
+  background: rgba(23, 19, 15, 0.9);
+  box-shadow: 0 8px 22px var(--shadow);
+  backdrop-filter: blur(5px);
+}
+
+.author-index-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.author-index-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--paper-dim);
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 12px;
+  line-height: 1;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.author-index-link:hover,
+.author-index-link:focus-visible {
+  outline: none;
+  background: var(--gold);
+  color: #1c1712;
+  transform: scale(1.35);
+}
+
+.back-to-top {
+  position: fixed;
+  z-index: 9;
+  right: 18px;
+  bottom: 18px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #332a20;
+  border-radius: 50%;
+  background: var(--leather);
+  color: var(--paper);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 6px 16px var(--shadow);
+  transition: opacity 0.2s ease, background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.back-to-top:hover,
+.back-to-top:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #1c1712;
+  transform: translateY(-3px);
+}
+
+.row {
+  margin-bottom: 40px;
+  scroll-margin-top: 120px;
+}
 
 .row-title {
   font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
@@ -404,8 +491,11 @@ main#shelf { padding: 8px 44px 64px; }
 
 @media (max-width: 640px) {
   .top-bar { padding: 14px 18px; flex-wrap: wrap; row-gap: 10px; }
-  main#shelf { padding: 8px 18px 48px; }
+  main#shelf { padding: 8px 48px 48px 18px; }
   .book-card, .cover { width: 108px; }
   .cover { height: 162px; }
   .stats { width: 100%; order: 3; }
+  .author-index { right: 6px; padding: 7px 3px; }
+  .author-index-link { width: 20px; height: 18px; font-size: 11px; }
+  .back-to-top { right: 10px; bottom: 12px; }
 }
