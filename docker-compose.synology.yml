@@ -19,6 +19,8 @@ services:
         # Dono do cache no NAS. Mudou? Rode "compose build" de novo e o chown em data/cache.
         APP_UID: ${APP_UID:-1000}
         APP_GID: ${APP_GID:-1000}
+    # Roda com o uid/gid do .env mesmo sem rebuild (os build args acima só valem no build).
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     environment:
       <<: *default-env
       # Senha de acesso à biblioteca. Use uma senha forte (ver .env.synology.example).
