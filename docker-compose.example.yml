@@ -1,0 +1,21 @@
+version: '1.1'
+
+services:
+  estante:
+    build: .
+    container_name: minhaestante
+    ports:
+      - "5000:5000"
+    environment:
+      # Troque pela sua senha. Nunca deixe o valor padrão em produção.
+      LIB_PSWD: "troque-esta-senha"
+    volumes:
+      # Troque pelo caminho real da sua pasta de livros no host.
+      # :ro = somente leitura — a aplicação nunca precisa escrever aqui.
+      - /seu/caminho/real:/data/livros:ro
+      # Volume nomeado para persistir capas geradas, o índice de cache e a
+      # chave de sessão entre reinícios/reconstruções do container.
+      - estante-cache:/app/.cache
+    restart: unless-stopped
+volumes:
+  estante-cache:
