@@ -50,6 +50,18 @@
       spread: "auto",
     });
 
+	// Hook: SVG (capas) mantém a proporção; <image> com "none" não estica.
+	rendition.hooks.content.register((contents) => {
+		const doc = contents.document;
+		if (!doc) return;
+		doc.querySelectorAll("svg").forEach((svg) => {
+			if (!svg.hasAttribute("preserveAspectRatio")) svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+		});
+		doc.querySelectorAll("image").forEach((img) => {
+			if (img.getAttribute("preserveAspectRatio") === "none") img.setAttribute("preserveAspectRatio", "xMidYMid meet");
+		});
+	});
+
 	rendition.themes.default({
 	"body": {
 		"background": "#f4ecd8 !important",
@@ -80,7 +92,39 @@
 		"display": "block !important",
 		"margin": "0 auto !important",
 		"max-width": "100% !important",
-		"max-height": "100% !important",
+		"width": "auto !important",
+		"height": "auto !important",
+		"max-height": "calc(100vh - 2em) !important",
+		"object-fit": "contain !important",
+	},
+	// Capa/imagem única (direta, em div ou p) ocupa a altura da tela, centralizada.
+	"body:has(> :is(div, p):only-child > :is(img, svg):only-child)": {
+		"display": "flex !important",
+		"align-items": "center !important",
+		"justify-content": "center !important",
+		"height": "100vh !important",
+		"margin": "0 !important",
+	},
+	"body:has(> :is(div, p):only-child > :is(img, svg):only-child) > :is(div, p)": {
+		"display": "flex !important",
+		"align-items": "center !important",
+		"justify-content": "center !important",
+		"width": "100% !important",
+	},
+	"body:has(> svg:only-child)": {
+		"display": "flex !important",
+		"align-items": "center !important",
+		"justify-content": "center !important",
+		"height": "100vh !important",
+		"margin": "0 !important",
+	},
+	"body > svg:only-child, body > :is(div, p):only-child > svg:only-child": {
+		"width": "100% !important",
+		"height": "calc(100vh - 2em) !important",
+	},
+	"svg": {
+		"max-width": "100% !important",
+		"max-height": "calc(100vh - 2em) !important",
 	},
 	"a": { "color": "#7a4b16 !important" },
 	});
