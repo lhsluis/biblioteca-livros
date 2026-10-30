@@ -6,8 +6,12 @@ Netflix: um cartão com capa para cada livro, agrupados em fileiras por
 autor, independente de qual seja o formato do arquivo.
 
 Uso:
-    python app.py /caminho/para/Livros
-    (ou defina a variável de ambiente LIVROS_DIR)
+    python app.py /caminho/para/Livros senha
+    (ou defina as variáveis de ambiente LIVROS_DIR e LIB_PSWD)
+
+    LIVROS_DIR: pasta com os livros (1º argumento como alternativa).
+    LIB_PSWD:   senha de acesso à biblioteca (2º argumento como alternativa).
+    Se nenhuma for definida, usa a senha padrão 'change-it' e avisa no terminal.
 
 Depois abra http://127.0.0.1:5000 no navegador.
 """
@@ -15,7 +19,11 @@ Depois abra http://127.0.0.1:5000 no navegador.
 import os
 import sys
 import json
+import hmac
 import mimetypes
+import threading
+import time
+import unicodedata
 from datetime import timedelta
 from pathlib import Path
 
@@ -23,6 +31,8 @@ from flask import (
     Flask, render_template, send_file, abort, jsonify,
     session, request, redirect, url_for,
 )
+
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from scanner import scan_library
 import cover_extractor as covers
@@ -55,6 +65,20 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 # argumento posicional na linha de comando.
 LIBRARY_DIR = os.environ.get("LIVROS_DIR") or (sys.argv[1] if len(sys.argv) > 1 else "Livros")
 LIBRARY_PASSWORD = os.environ.get("LIB_PSWD") or (sys.argv[2] if len(sys.argv) > 2 else "change-it")
+# Atrás do reverse proxy HTTPS do DSM: quantos proxies confiar nos X-Forwarded-*.
+# 0 = nenhum (dev local); 1 = um proxy na frente (caso do Synology).
+TRUST_PROXY_HOPS = int(os.environ.get("TRUST_PROXY_HOPS", "0"))
+# Cookie de sessão só trafega por HTTPS quando ativado (ligue em produção).
+SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "").strip().lower() in ("1", "true", "yes")
+
+app.config["SESSION_COOKIE_SECURE"] = SESSION_COOKIE_SECURE
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+if TRUST_PROXY_HOPS > 0:
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=TRUST_PROXY_HOPS, x_proto=TRUST_PROXY_HOPS, x_host=TRUST_PROXY_HOPS,
+    )
  
 if LIBRARY_PASSWORD == "change-it":
     print("[AVISO] Nenhuma senha definida (LIB_PSWD ou 2º argumento). "
@@ -73,23 +97,67 @@ def require_login():
         return redirect(url_for("login", next=request.path))
 
 
+LOGIN_MAX_FALHAS = 5
+LOGIN_JANELA_SEGUNDOS = 600  # 10 minutos
+
+_falhas_login = {}  # IP -> lista de instantes das falhas recentes
+_falhas_lock = threading.Lock()
+
+
+def _safe_next(url):
+    """Aceita só caminhos internos. '//' e '/\\' viram URL externa no navegador,
+    então caem no índice."""
+    if (url and url.startswith("/") and not url.startswith(("//", "/\\"))
+            and not any(c in url for c in "\t\r\n")):
+        return url
+    return url_for("index")
+
+
+def _login_bloqueado(ip):
+    """Diz se o IP excedeu as falhas permitidas na janela de tempo."""
+    agora = time.time()
+    with _falhas_lock:
+        recentes = [t for t in _falhas_login.get(ip, []) if agora - t < LOGIN_JANELA_SEGUNDOS]
+        if recentes:
+            _falhas_login[ip] = recentes
+        else:
+            _falhas_login.pop(ip, None)
+        return len(recentes) >= LOGIN_MAX_FALHAS
+
+
+def _registrar_falha(ip):
+    with _falhas_lock:
+        _falhas_login.setdefault(ip, []).append(time.time())
+
+
+def _limpar_falhas(ip):
+    with _falhas_lock:
+        _falhas_login.pop(ip, None)
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
-    next_url = request.values.get("next") or url_for("index")
+    next_url = _safe_next(request.values.get("next"))
+    ip = request.remote_addr
 
     if request.method == "POST":
-        entered = request.form.get("password", "")
-        if entered == LIBRARY_PASSWORD:
-            session.permanent = True
-            session["authenticated"] = True
-            return redirect(request.form.get("next") or url_for("index"))
-        error = "Senha incorreta."
+        if _login_bloqueado(ip):
+            error = "Muitas tentativas. Aguarde alguns minutos."
+        else:
+            entered = request.form.get("password", "")
+            if hmac.compare_digest(entered.encode(), LIBRARY_PASSWORD.encode()):
+                _limpar_falhas(ip)
+                session.permanent = True
+                session["authenticated"] = True
+                return redirect(_safe_next(request.form.get("next")))
+            _registrar_falha(ip)
+            error = "Senha incorreta."
 
     return render_template("login.html", error=error, next=next_url)
 
 
-@app.route("/logout")
+@app.route("/logout", methods=["POST"])
 def logout():
     session.pop("authenticated", None)
     return redirect(url_for("login"))
@@ -119,18 +187,43 @@ def ensure_cover(book, index: dict):
     index[book.id] = {"mtime": book.mtime, "title": book.title, "author": book.author}
 
 
+# Evita dois rescans simultâneos escreverem o index.json ao mesmo tempo.
+_build_lock = threading.Lock()
+
+
 def build_library():
     global _books_by_id
-    books = scan_library(LIBRARY_DIR)
-    index = load_cover_index()
+    with _build_lock:
+        books = scan_library(LIBRARY_DIR)
+        index = load_cover_index()
 
-    for b in books:
-        ensure_cover(b, index)
-        b.cover_url = f"/covers/{b.id}.jpg"
+        for b in books:
+            ensure_cover(b, index)
+            b.cover_url = f"/covers/{b.id}.jpg?v={int(b.mtime)}"
 
-    save_cover_index(index)
-    _books_by_id = {b.id: b for b in books}
-    return books
+        # Remove capas de livros que sumiram da pasta (entrada e .jpg).
+        ids_atuais = {b.id for b in books}
+        if not books:  # pasta indisponível/vazia: não apaga o cache inteiro
+            ids_atuais = set(index)
+        for book_id in list(index):
+            if book_id not in ids_atuais:
+                index.pop(book_id, None)
+                (COVERS_DIR / f"{book_id}.jpg").unlink(missing_ok=True)
+
+        # Remove .jpg órfãos que não correspondem a nenhum livro.
+        for jpg in COVERS_DIR.glob("*.jpg"):
+            if jpg.stem not in ids_atuais:
+                jpg.unlink(missing_ok=True)
+
+        save_cover_index(index)
+        _books_by_id = {b.id: b for b in books}
+        return books
+
+
+def _chave_sem_acento(texto):
+    """'Álvares' -> 'alvares': remove marcas de acento para ordenar e indexar."""
+    decomposto = unicodedata.normalize("NFD", texto)
+    return "".join(c for c in decomposto if unicodedata.category(c) != "Mn").lower()
 
 
 @app.route("/")
@@ -139,16 +232,23 @@ def index():
     authors = {}
     for b in books:
         authors.setdefault(b.author, []).append(b)
-    authors = dict(sorted(authors.items(), key=lambda kv: kv[0].lower()))
+    authors = dict(sorted(
+        authors.items(),
+        key=lambda kv: (_chave_sem_acento(kv[0]), kv[0].lower()),
+    ))
     letter_targets = {}
     for position, author in enumerate(authors):
-        letter = author[:1].upper()
+        letter = _chave_sem_acento(author)[:1].upper()
         letter_targets.setdefault(letter, f"author-{position}")
+
+    # Fileira "Adicionados recentemente": só aparece com mais de 12 livros.
+    recent = sorted(books, key=lambda b: b.mtime, reverse=True)[:12] if len(books) > 12 else []
 
     return render_template(
         "index.html",
         authors=authors,
         letter_targets=letter_targets,
+        recent=recent,
         total=len(books),
         library_dir=str(Path(LIBRARY_DIR).expanduser().resolve()),
     )
@@ -159,7 +259,8 @@ def cover(book_id):
     path = COVERS_DIR / f"{book_id}.jpg"
     if not path.exists():
         abort(404)
-    return send_file(path, mimetype="image/jpeg")
+    # Capa muda quando o livro muda; a URL versionada (?v=mtime) cuida disso.
+    return send_file(path, mimetype="image/jpeg", max_age=60 * 60 * 24 * 30)
 
 
 @app.route("/book/<book_id>")

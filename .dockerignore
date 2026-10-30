@@ -1,0 +1,13 @@
+.git
+.cache
+data
+tests
+__pycache__
+.pytest_cache
+.env
+.env.*
+.claude
+CLAUDE.md
+roadmap.md
+docs
+requirements-dev.txt

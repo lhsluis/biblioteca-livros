@@ -2,3 +2,7 @@
 __pycache__/
 CLAUDE.md
 .claude/
+roadmap.md
+.pytest_cache/
+.env
+data/

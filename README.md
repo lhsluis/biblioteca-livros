@@ -22,7 +22,8 @@ raiz (ex.: `Livros/Machado de Assis/dom-casmurro.epub` → autor
 
 As capas geradas ficam em cache na pasta `.cache/`, então a partir da
 segunda execução o carregamento é praticamente instantâneo — só livros
-novos ou alterados são reprocessados.
+novos ou alterados são reprocessados. Ao reescanear, capas de livros que
+sumiram da pasta (e arquivos `.jpg` órfãos) são apagadas do cache.
 
 ## Tela de login
 
@@ -47,7 +48,11 @@ padrão em produção.
 
 Depois de logar uma vez, a sessão fica salva por 30 dias (mesmo navegador),
 então não é preciso digitar a senha a cada visita. Há um link "Sair" no
-topo da página para encerrar a sessão manualmente.
+topo da página para encerrar a sessão manualmente (o botão envia um POST
+para `/logout`).
+
+Após 5 senhas erradas seguidas em 10 minutos, o IP fica bloqueado por esse
+período e o login recusa novas tentativas sem checar a senha.
 
 ## Deploy com em "Produção" com Docker
 
@@ -112,6 +117,12 @@ lista sem precisar reiniciar nada.
 Reiniciar o container (`docker compose restart`) também funciona, e
 reescaneia tudo no início.
 
+## Deploy no Synology
+
+Para rodar no NAS pelo Container Manager, com HTTPS pelo reverse proxy do DSM,
+use `docker-compose.synology.yml` e o `.env.synology.example`. O passo a passo
+está em [docs/deploy-synology.md](docs/deploy-synology.md).
+
 ## Instalação local
 
 ```bash
@@ -139,7 +150,8 @@ Ao clicar num livro:
 - **EPUB** abre um leitor dentro do próprio navegador (usando a
   biblioteca [epub.js](https://github.com/futurepress/epub.js)), com
   navegação por página, arraste em telas de toque e indicador de
-  progresso.
+  progresso. A posição de leitura é salva no navegador (localStorage) e
+  restaurada ao reabrir o livro; as setas ← → também viram página.
 - **PDF e TXT** abrem direto numa nova aba do navegador.
 - **DOC, DOCX** e os demais formatos são baixados, porque o navegador
   não sabe exibi-los nativamente.
@@ -156,12 +168,28 @@ Ao clicar num livro:
 O campo de busca no topo filtra por título ou autor em tempo real, sem
 recarregar a página.
 
+Atalhos: `/` ou `Ctrl+K` (`Cmd+K` no Mac) foca a busca; `Esc` dentro dela
+limpa o texto e tira o foco.
+
+Quando a biblioteca tem mais de 12 livros, aparece no topo a fileira
+"Adicionados recentemente" com os 12 mais recentes (pelo data de modificação
+do arquivo). A letra do índice de autores ignora acentos ("Álvares" entra em "A").
+
 ## Atualizar a biblioteca sem reiniciar
 
 Se adicionar ou remover livros com o servidor já rodando, clique em
 **"Atualizar biblioteca"** no topo da página — ele chama a rota
 `/rescan` usando a sessão do navegador (que já está logada) e recarrega
 a lista automaticamente. Reiniciar o servidor também funciona.
+
+## Testes
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+Os testes usam uma biblioteca temporária vazia e não tocam nas capas reais.
 
 ## Notas
 - Para pastas muito grandes, a primeira execução pode demorar alguns

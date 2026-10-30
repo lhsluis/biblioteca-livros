@@ -14,9 +14,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN useradd --create-home appuser \
+# uid/gid fixos: o /app/.cache montado do host (NAS) precisa ser gravável por eles.
+# Ex.: chown -R 1000:1000 ./data/cache. No deploy, defina APP_UID/APP_GID no .env (build args do compose).
+ARG APP_UID=1000
+ARG APP_GID=1000
+# O gid pode já existir na imagem (ex.: 100 = "users", padrão do Synology); nesse caso é reaproveitado.
+RUN (getent group "$APP_GID" >/dev/null || groupadd --gid "$APP_GID" appuser) \
+    && useradd --uid "$APP_UID" --gid "$APP_GID" --create-home appuser \
     && mkdir -p /data/livros /app/.cache \
-    && chown -R appuser:appuser /app /data/livros
+    && chown -R "$APP_UID:$APP_GID" /app /data/livros
 USER appuser
 
 ENV PYTHONUNBUFFERED=1 \

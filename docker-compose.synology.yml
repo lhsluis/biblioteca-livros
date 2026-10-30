@@ -1,0 +1,48 @@
+# Deploy no Synology NAS (Container Manager → Projeto → docker compose).
+# Guia: docs/deploy-synology.md. Variáveis: .env.synology.example (copie para .env na pasta do projeto).
+name: estante
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-env: &default-env
+  TZ: America/Sao_Paulo
+
+services:
+  estante:
+    build:
+      context: .
+      args:
+        # Dono do cache no NAS. Mudou? Rode "compose build" de novo e o chown em data/cache.
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    environment:
+      <<: *default-env
+      # Senha de acesso à biblioteca. Use uma senha forte (ver .env.synology.example).
+      LIB_PSWD: ${LIB_PSWD:?defina no .env}
+      LIVROS_DIR: /data/livros
+      # Atrás do reverse proxy HTTPS do DSM (1 salto): usa o IP real do cliente no bloqueio de login.
+      TRUST_PROXY_HOPS: "1"
+      # Cookie de sessão Secure. Só use false para testar via http://IP:8080.
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+    ports:
+      # 80 e 443 são do DSM; o reverse proxy HTTPS aponta para http://localhost:${HTTP_PORT:-8080}.
+      - "127.0.0.1:${HTTP_PORT:-8080}:5000"
+    volumes:
+      # Pasta de livros do NAS, somente leitura. A aplicação nunca escreve aqui.
+      - ${LIVROS_HOST_DIR:?defina no .env}:/data/livros:ro
+      # Capas geradas, índice de cache e chave de sessão. Regenerável, sem backup.
+      - ${CACHE_DIR:-./data/cache}:/app/.cache
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:5000/login"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # Primeira varredura de uma biblioteca grande pode demorar; não marcar unhealthy antes disso.
+      start_period: 120s
+    restart: unless-stopped
+    logging: *default-logging
+    # mem_limit: 256m

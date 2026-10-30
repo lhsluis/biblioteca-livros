@@ -13,12 +13,14 @@
     <h1 class="brand"> <img src="{{ url_for('static', filename='estante.png') }}" alt="" class="brand-logo">Estante</h1>
 
     <div class="search-wrap">
-      <input id="search" type="text" placeholder="Buscar por título ou autor" autocomplete="off">
+      <input id="search" type="text" placeholder="Buscar por título ou autor  ( / )" autocomplete="off">
     </div>
 
     <p class="stats">{{ total }} livros de {{ authors|length }} autores</p>
-	<button id="rescan-btn" class="logout-link" type="button">Atualizar biblioteca</button>																					   
-    <a class="logout-link" href="{{ url_for('logout') }}">Sair</a>
+    <button id="rescan-btn" class="logout-link" type="button" title="Atualizar biblioteca" aria-label="Atualizar biblioteca"><span aria-hidden="true">↻</span><span class="btn-label">Atualizar biblioteca</span></button>
+    <form method="post" action="{{ url_for('logout') }}" class="logout-form">
+      <button class="logout-link" type="submit" title="Sair" aria-label="Sair"><span aria-hidden="true">⎋</span><span class="btn-label">Sair</span></button>
+    </form>
   </header>
 
   {% if total == 0 %}
@@ -36,6 +38,27 @@
   </nav>
 
   <main id="shelf">
+    {% if recent %}
+    <section class="row row-recent">
+      <h2 class="row-title">Adicionados recentemente</h2>
+      <div class="row-track">
+        {% for book in recent %}
+        <a class="book-card"
+           href="{{ url_for('read_book', book_id=book.id) if book.ext == 'epub' else url_for('open_book', book_id=book.id) }}"
+           target="_blank"
+           rel="noopener"
+           data-title="{{ book.title|lower }}"
+           data-author="{{ book.author|lower }}">
+          <span class="cover">
+            <img loading="lazy" src="{{ book.cover_url }}" alt="Capa de {{ book.title }}">
+            <span class="format-tag">{{ book.ext|upper }}</span>
+          </span>
+          <span class="book-title">{{ book.title }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
     {% for author, books in authors.items() %}
     <section class="row" id="author-{{ loop.index0 }}" data-author="{{ author|lower }}">
       <h2 class="row-title">{{ author }}</h2>

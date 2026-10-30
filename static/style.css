@@ -88,6 +88,7 @@ html, body {
 
 .logout-link:disabled { opacity: 0.5; cursor: default; }														
 .logout-link:hover { border-color: var(--gold); color: var(--paper); }
+.logout-form { display: contents; margin: 0; }
 
 /* --- Tela de login --- */
 
@@ -390,6 +391,9 @@ main#shelf { padding: 8px 44px 64px; }
   display: flex;
   gap: 18px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
   padding-bottom: 10px;
 }
 
@@ -399,6 +403,7 @@ main#shelf { padding: 8px 44px 64px; }
 .book-card {
   flex: 0 0 auto;
   width: 148px;
+  scroll-snap-align: start;
   text-decoration: none;
   color: inherit;
   display: flex;
@@ -498,4 +503,18 @@ main#shelf { padding: 8px 44px 64px; }
   .author-index { right: 6px; padding: 7px 3px; }
   .author-index-link { width: 20px; height: 18px; font-size: 11px; }
   .back-to-top { right: 10px; bottom: 12px; }
+  .search-wrap, #search { min-width: 0; }
+  .top-bar .logout-link { padding: 6px 10px; font-size: 15px; line-height: 1; }
+  .btn-label { display: none; }
+}
+
+/* --- Tablet (641px a 1024px) --- */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .top-bar { padding: 18px 32px; gap: 22px; }
+  main#shelf { padding: 8px 32px 56px; }
+  .row { margin-bottom: 36px; }
+  .row-title { font-size: 18px; }
+  .row-track { gap: 16px; }
+  .book-card { width: 128px; }
+  .cover { width: 128px; height: 192px; }
 }

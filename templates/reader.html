@@ -85,15 +85,38 @@
 	"a": { "color": "#7a4b16 !important" },
 	});
 
-    rendition.display();
+    // Posição de leitura: salva o CFI a cada "relocated" e restaura ao abrir.
+    // Todo acesso ao localStorage fica em try/catch (modo privado, dados bloqueados).
+    const POS_KEY = "estante:pos:" + {{ book.id | tojson }};
+    function lerPosicao() {
+      try { return localStorage.getItem(POS_KEY); } catch (e) { return null; }
+    }
+    function salvarPosicao(cfi) {
+      try { localStorage.setItem(POS_KEY, cfi); } catch (e) { /* ignora */ }
+    }
+
+    function exibirInicio() {
+      const cfi = lerPosicao();
+      if (!cfi) return rendition.display();
+      try {
+        return rendition.display(cfi).catch(() => rendition.display());
+      } catch (e) {
+        return rendition.display();
+      }
+    }
+    exibirInicio();
 
     document.getElementById("prev").addEventListener("click", () => rendition.prev());
     document.getElementById("next").addEventListener("click", () => rendition.next());
 
-    document.addEventListener("keyup", (event) => {
+    function navegarPorSetas(event) {
       if (event.key === "ArrowLeft") rendition.prev();
       if (event.key === "ArrowRight") rendition.next();
-    });
+    }
+    // document: foco fora do EPUB; rendition "keyup": foco dentro do iframe
+    // (o keyup do iframe não sobe para o document, então não há duplicação).
+    document.addEventListener("keyup", navegarPorSetas);
+    rendition.on("keyup", navegarPorSetas);
 
     // Suporte a arrastar/deslizar em telas de toque
     let touchStartX = null;
@@ -123,6 +146,7 @@
  
     // registra o listener já de cara, para não perder o primeiro "relocated"
     rendition.on("relocated", updateProgress);
+    rendition.on("relocated", (location) => salvarPosicao(location.start.cfi));
 	
 	book.ready
 	.then(() => book.locations.generate(1200))

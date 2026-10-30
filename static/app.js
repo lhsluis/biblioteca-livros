@@ -30,11 +30,33 @@ if (searchInput) {
     if (emptyState) emptyState.hidden = anyVisible;
   });
 }
+if (searchInput) {
+
+  document.addEventListener("keydown", (e) => {
+    const active = document.activeElement;
+
+    if (active === searchInput && e.key === "Escape") {
+      searchInput.value = "";
+      searchInput.dispatchEvent(new Event("input"));
+      searchInput.blur();
+      return;
+    }
+
+    const digitando = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+    if (digitando) return;
+
+    if (e.key === "/" || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")) {
+      e.preventDefault();
+      searchInput.focus();
+    }
+  });
+}
+
 const rescanBtn = document.getElementById("rescan-btn");
 if (rescanBtn) {
   rescanBtn.addEventListener("click", async () => {
     rescanBtn.disabled = true;
-    const originalText = rescanBtn.textContent;
+    const originalHTML = rescanBtn.innerHTML;
     rescanBtn.textContent = "Atualizando…";
 
     try {
@@ -47,7 +69,7 @@ if (rescanBtn) {
     } catch (err) {
       rescanBtn.textContent = "Erro ao atualizar";
       setTimeout(() => {
-        rescanBtn.textContent = originalText;
+        rescanBtn.innerHTML = originalHTML;
         rescanBtn.disabled = false;
       }, 2500);
     }
