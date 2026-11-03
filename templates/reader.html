@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ book.title }} · {{ book.author }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='fonts/fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="icon" href="{{ url_for('static', filename='estante.ico') }}">
   <script src="{{ url_for('static', filename='jszip.min.js') }}"></script>
@@ -12,20 +13,19 @@
 <body class="reader-body">
 
   <header class="reader-bar">
-    <a class="reader-back" href="{{ url_for('index') }}">‹ Estante</a>
+    <a class="reader-back" href="{{ url_for('index') }}"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Estante</a>
     <div class="reader-heading">
-      <span class="reader-title">{{ book.title }} | 
-		<a class="reader-download" href="{{ url_for('open_book', book_id=book.id) }}">Download ↓</a></span>
+      <span class="reader-title">{{ book.title }}</span>
+      <a class="reader-download" href="{{ url_for('open_book', book_id=book.id) }}"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Baixar</a>
       <span class="reader-author">{{ book.author }}</span>
-	  <span class="reader-title"></span>
     </div>
     <span class="reader-progress" id="progress"></span>
   </header>
 
   <div class="viewer-wrap">
     <div id="viewer" class="viewer"></div>
-    <button id="prev" class="nav-btn nav-prev" aria-label="Página anterior">‹</button>
-    <button id="next" class="nav-btn nav-next" aria-label="Próxima página">›</button>
+    <button id="prev" class="nav-btn nav-prev" aria-label="Página anterior"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+    <button id="next" class="nav-btn nav-next" aria-label="Próxima página"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
   </div>
   
   <footer class="reader-footer">
@@ -50,84 +50,84 @@
       spread: "auto",
     });
 
-	// Hook: SVG (capas) mantém a proporção; <image> com "none" não estica.
-	rendition.hooks.content.register((contents) => {
-		const doc = contents.document;
-		if (!doc) return;
-		doc.querySelectorAll("svg").forEach((svg) => {
-			if (!svg.hasAttribute("preserveAspectRatio")) svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-		});
-		doc.querySelectorAll("image").forEach((img) => {
-			if (img.getAttribute("preserveAspectRatio") === "none") img.setAttribute("preserveAspectRatio", "xMidYMid meet");
-		});
-	});
+    // Hook: SVG (capas) mantém a proporção; <image> com "none" não estica.
+    rendition.hooks.content.register((contents) => {
+        const doc = contents.document;
+        if (!doc) return;
+        doc.querySelectorAll("svg").forEach((svg) => {
+            if (!svg.hasAttribute("preserveAspectRatio")) svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        });
+        doc.querySelectorAll("image").forEach((img) => {
+            if (img.getAttribute("preserveAspectRatio") === "none") img.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        });
+    });
 
-	rendition.themes.default({
-	"body": {
-		"background": "#f4ecd8 !important",
-		"color": "#221a12 !important",
-		"padding": "0 12px !important",
-	},
-	"body:has(> img:only-child)": {
-		"display": "flex !important",
-		"align-items": "center !important",
-		"justify-content": "center !important",
-		"height": "100vh !important",
-		"margin": "0 !important",
-	},
-	"body:has(> div:only-child > img:only-child)": {
-		"display": "flex !important",
-		"align-items": "center !important",
-		"justify-content": "center !important",
-		"height": "100vh !important",
-		"margin": "0 !important",
-	},
-	"body:has(> div:only-child > img:only-child) > div": {
-		"display": "flex !important",
-		"align-items": "center !important",
-		"justify-content": "center !important",
-		"width": "100% !important",
-	},
-	"img": {
-		"display": "block !important",
-		"margin": "0 auto !important",
-		"max-width": "100% !important",
-		"width": "auto !important",
-		"height": "auto !important",
-		"max-height": "calc(100vh - 2em) !important",
-		"object-fit": "contain !important",
-	},
-	// Capa/imagem única (direta, em div ou p) ocupa a altura da tela, centralizada.
-	"body:has(> :is(div, p):only-child > :is(img, svg):only-child)": {
-		"display": "flex !important",
-		"align-items": "center !important",
-		"justify-content": "center !important",
-		"height": "100vh !important",
-		"margin": "0 !important",
-	},
-	"body:has(> :is(div, p):only-child > :is(img, svg):only-child) > :is(div, p)": {
-		"display": "flex !important",
-		"align-items": "center !important",
-		"justify-content": "center !important",
-		"width": "100% !important",
-	},
-	"body:has(> svg:only-child)": {
-		"display": "flex !important",
-		"align-items": "center !important",
-		"justify-content": "center !important",
-		"height": "100vh !important",
-		"margin": "0 !important",
-	},
-	"body > svg:only-child, body > :is(div, p):only-child > svg:only-child": {
-		"width": "100% !important",
-		"height": "calc(100vh - 2em) !important",
-	},
-	"svg": {
-		"max-width": "100% !important",
-		"max-height": "calc(100vh - 2em) !important",
-	},
-	"a": { "color": "#7a4b16 !important" },
-	});
+    rendition.themes.default({
+    "body": {
+        "background": "#f4ecd8 !important",
+        "color": "#221a12 !important",
+        "padding": "0 12px !important",
+    },
+    "body:has(> img:only-child)": {
+        "display": "flex !important",
+        "align-items": "center !important",
+        "justify-content": "center !important",
+        "height": "100vh !important",
+        "margin": "0 !important",
+    },
+    "body:has(> div:only-child > img:only-child)": {
+        "display": "flex !important",
+        "align-items": "center !important",
+        "justify-content": "center !important",
+        "height": "100vh !important",
+        "margin": "0 !important",
+    },
+    "body:has(> div:only-child > img:only-child) > div": {
+        "display": "flex !important",
+        "align-items": "center !important",
+        "justify-content": "center !important",
+        "width": "100% !important",
+    },
+    "img": {
+        "display": "block !important",
+        "margin": "0 auto !important",
+        "max-width": "100% !important",
+        "width": "auto !important",
+        "height": "auto !important",
+        "max-height": "calc(100vh - 2em) !important",
+        "object-fit": "contain !important",
+    },
+    // Capa/imagem única (direta, em div ou p) ocupa a altura da tela, centralizada.
+    "body:has(> :is(div, p):only-child > :is(img, svg):only-child)": {
+        "display": "flex !important",
+        "align-items": "center !important",
+        "justify-content": "center !important",
+        "height": "100vh !important",
+        "margin": "0 !important",
+    },
+    "body:has(> :is(div, p):only-child > :is(img, svg):only-child) > :is(div, p)": {
+        "display": "flex !important",
+        "align-items": "center !important",
+        "justify-content": "center !important",
+        "width": "100% !important",
+    },
+    "body:has(> svg:only-child)": {
+        "display": "flex !important",
+        "align-items": "center !important",
+        "justify-content": "center !important",
+        "height": "100vh !important",
+        "margin": "0 !important",
+    },
+    "body > svg:only-child, body > :is(div, p):only-child > svg:only-child": {
+        "width": "100% !important",
+        "height": "calc(100vh - 2em) !important",
+    },
+    "svg": {
+        "max-width": "100% !important",
+        "max-height": "calc(100vh - 2em) !important",
+    },
+    "a": { "color": "#7a4b16 !important" },
+    });
 
     // Posição de leitura: salva o CFI a cada "relocated" e restaura ao abrir.
     // Todo acesso ao localStorage fica em try/catch (modo privado, dados bloqueados).
@@ -176,10 +176,10 @@
     });
 
     const progressEl = document.getElementById("progress");
-	const pageCounterEl = document.getElementById("page-counter");	
+    const pageCounterEl = document.getElementById("page-counter");    
     let totalPages = null;
-	
-	function updateProgress(location) {
+    
+    function updateProgress(location) {
       if (!totalPages) return; // locations ainda não geradas
       const pct = book.locations.percentageFromCfi(location.start.cfi);
       progressEl.textContent = Math.round(pct * 100) + "%";
@@ -191,21 +191,21 @@
     // registra o listener já de cara, para não perder o primeiro "relocated"
     rendition.on("relocated", updateProgress);
     rendition.on("relocated", (location) => salvarPosicao(location.start.cfi));
-	
-	book.ready
-	.then(() => book.locations.generate(1200))
-	.then(() => {
-		totalPages = book.locations.length();
-		// atualiza imediatamente com a posição atual, sem esperar o próximo "virar de página"
-		if (rendition.location) {
-		updateProgress(rendition.location);
-		}
-	})
-	.catch(() => {
-		// Sem contador/progresso caso a geração de localizações falhe;
-		// a leitura em si continua funcionando normalmente.
-		pageCounterEl.textContent = "";
-	});
+    
+    book.ready
+    .then(() => book.locations.generate(1200))
+    .then(() => {
+        totalPages = book.locations.length();
+        // atualiza imediatamente com a posição atual, sem esperar o próximo "virar de página"
+        if (rendition.location) {
+        updateProgress(rendition.location);
+        }
+    })
+    .catch(() => {
+        // Sem contador/progresso caso a geração de localizações falhe;
+        // a leitura em si continua funcionando normalmente.
+        pageCounterEl.textContent = "";
+    });
 
     book.on("openFailed", () => {
       document.getElementById("reader-error").hidden = false;

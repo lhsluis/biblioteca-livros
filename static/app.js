@@ -56,8 +56,9 @@ const rescanBtn = document.getElementById("rescan-btn");
 if (rescanBtn) {
   rescanBtn.addEventListener("click", async () => {
     rescanBtn.disabled = true;
-    const originalHTML = rescanBtn.innerHTML;
-    rescanBtn.textContent = "Atualizando…";
+    const label = rescanBtn.querySelector(".btn-label");
+    const originalLabel = label.textContent;
+    label.textContent = "Atualizando…";
 
     try {
       const res = await fetch("/rescan", { method: "POST" });
@@ -67,9 +68,9 @@ if (rescanBtn) {
       }
       throw new Error("Falha ao atualizar");
     } catch (err) {
-      rescanBtn.textContent = "Erro ao atualizar";
+      label.textContent = "Erro ao atualizar";
       setTimeout(() => {
-        rescanBtn.innerHTML = originalHTML;
+        label.textContent = originalLabel;
         rescanBtn.disabled = false;
       }, 2500);
     }
